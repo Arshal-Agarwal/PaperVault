@@ -1,5 +1,6 @@
 const Folder = require("../../models/Folder");
 const publishEvent = require("../../utils/publishEvent");
+const { delCache } = require("../../utils/cache");
 
 /**
  * @desc    Hard delete a folder (delete folder + children + papers inside)
@@ -16,6 +17,8 @@ const hardDeleteFolder = async (req, res) => {
     if (folder.undeletable) {
       return res.status(400).json({ error: "Cannot delete root/undeletable folder" });
     }
+
+    const userId = folder.user_id; // cache invalidation needs this
 
     // Recursive delete helper
     const deleteRecursively = async (id) => {
@@ -45,6 +48,9 @@ const hardDeleteFolder = async (req, res) => {
         $pull: { children: folder._id },
       });
     }
+
+    // ❌ Invalidate user’s folder tree cache
+    await delCache(`folderTree:${userId}`);
 
     res.json({ message: "Folder and its subfolders hard deleted successfully" });
   } catch (error) {

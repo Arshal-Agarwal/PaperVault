@@ -1,5 +1,6 @@
 const Folder = require("../../models/Folder");
 const publishEvent = require("../../utils/publishEvent");
+const { delCache } = require("../../utils/cache");
 
 /**
  * @desc    Soft delete a folder (move children + papers up to parent)
@@ -39,7 +40,6 @@ const softDeleteFolder = async (req, res) => {
       }
     }
 
-
     // Delete the folder
     await Folder.findByIdAndDelete(folderId);
 
@@ -51,6 +51,13 @@ const softDeleteFolder = async (req, res) => {
       userId: folder.user_id,
       timestamp: Date.now(),
     });
+
+    // ❌ Invalidate caches
+    await delCache(`folder:${folderId}`);          // deleted folder
+    await delCache(`folderTree:${folder.user_id}`); // full tree of user
+    if (folder.parent_id) {
+      await delCache(`folder:${folder.parent_id}`); // parent changed
+    }
 
     res.json({ message: "Folder soft deleted and reassigned successfully" });
   } catch (error) {

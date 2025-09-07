@@ -1,4 +1,5 @@
-const Folder = require("../../models/Folder.js")
+const Folder = require("../../models/Folder.js");
+const { delCache } = require("../../utils/cache.js");
 
 /**
  * @desc    Create a new folder
@@ -7,9 +8,9 @@ const Folder = require("../../models/Folder.js")
  */
 const createFolder = async (req, res) => {
   try {
-    var { name, parent_id, user_id , undeletable} = req.body;
+    let { name, parent_id, user_id, undeletable } = req.body;
 
-    if(undeletable==null) undeletable=false;
+    if (undeletable == null) undeletable = false;
 
     if (!name || !user_id) {
       return res.status(400).json({ error: "Name and user_id are required" });
@@ -20,7 +21,7 @@ const createFolder = async (req, res) => {
       name,
       parent_id: parent_id || null,
       user_id,
-      undeletable 
+      undeletable,
     });
 
     await folder.save();
@@ -32,6 +33,9 @@ const createFolder = async (req, res) => {
       });
     }
 
+    // ❌ Invalidate cache for this user's folder tree
+    await delCache(`folderTree:${user_id}`);
+
     res.status(201).json(folder);
   } catch (error) {
     console.error("❌ Error creating folder:", error.message);
@@ -39,4 +43,4 @@ const createFolder = async (req, res) => {
   }
 };
 
-module.exports =  createFolder ;
+module.exports = createFolder;

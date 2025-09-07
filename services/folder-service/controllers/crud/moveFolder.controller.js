@@ -1,5 +1,6 @@
 const Folder = require("../../models/Folder");
 const publishEvent = require("../../utils/publishEvent");
+const { delCache } = require("../../utils/cache");
 
 /**
  * @desc    Move a folder to a new parent
@@ -49,7 +50,9 @@ const moveFolder = async (req, res) => {
 
       return false;
     };
-
+    if (await isDescendant(newParentId, folderId)) {
+      return res.status(400).json({ error: "Cannot move folder into its descendant" });
+    }
 
     // Remove from old parent's children[]
     if (folder.parent_id) {
@@ -79,6 +82,10 @@ const moveFolder = async (req, res) => {
       userId: folder.user_id,
       timestamp: Date.now(),
     });
+
+    // ❌ Invalidate relevant cache
+    await delCache(`folder:${folderId}`); // clear single folder cache
+    await delCache(`folderTree:${folder.user_id}`); // clear user’s tree
 
     res.json({ message: "Folder moved successfully", folder });
   } catch (error) {

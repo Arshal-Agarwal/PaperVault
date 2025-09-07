@@ -1,4 +1,5 @@
 const Folder = require("../../models/Folder");
+const { getCache, setCache } = require("../../utils/cache");
 
 /**
  * @desc    Get full folder tree for a user as nested JSON {folderId: {childId: {...}}}
@@ -7,8 +8,15 @@ const Folder = require("../../models/Folder");
 const getFolderTreeByUser = async (req, res) => {
   try {
     const userId = req.params.userId;
+    const cacheKey = `folderTree:${userId}`;
 
-    // Fetch all folders of this user
+    // ✅ 1. Check Redis cache first
+    const cached = await getCache(cacheKey);
+    if (cached) {
+      return res.json(JSON.parse(cached));
+    }
+
+    // ❌ 2. Query DB
     const folders = await Folder.find({ user_id: userId }).lean();
     if (!folders || folders.length === 0) {
       return res.status(404).json({ error: "No folders found for user" });
@@ -35,6 +43,9 @@ const getFolderTreeByUser = async (req, res) => {
         tree[id] = folderMap[id];
       }
     });
+
+    // ✅ 3. Save in cache
+    await setCache(cacheKey, JSON.stringify(tree));
 
     res.json(tree);
   } catch (error) {

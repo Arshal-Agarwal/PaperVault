@@ -1,5 +1,6 @@
 const Folder = require("../../models/Folder");
 const publishEvent = require("../../utils/publishEvent");
+const { delCache } = require("../../utils/cache");
 
 /**
  * @desc    Rename a folder
@@ -38,6 +39,10 @@ const renameFolder = async (req, res) => {
       userId: folder.user_id,
       timestamp: Date.now(),
     });
+
+    // ❌ Invalidate cache
+    await delCache(`folder:${folderId}`);       // clear single folder cache
+    await delCache(`folderTree:${folder.user_id}`); // clear user’s tree cache
 
     res.json({ message: "Folder renamed successfully", folder });
   } catch (error) {

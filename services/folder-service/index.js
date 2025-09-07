@@ -7,11 +7,13 @@ const connectDB = require('./config/connectDB')
 const { connectRabbitMQ } = require("./config/connectRabbitMQ");
 const crudRoutes = require('./routes/crud.route')
 const featureRoutes = require('./routes/feature.route')
+const {connectCache} = require('./config/connectRedis')
 
 app.use(cors());
 app.use(express.json()); 
 connectDB();
 connectRabbitMQ();
+connectCache();
 
 app.use('/crud',crudRoutes);
 app.use('/feature',featureRoutes);
