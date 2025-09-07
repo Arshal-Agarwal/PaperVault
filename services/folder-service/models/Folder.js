@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+const mongoose = require('mongoose')
 
 const folderSchema = new mongoose.Schema(
   {
@@ -22,6 +22,10 @@ const folderSchema = new mongoose.Schema(
       type: String, // storing MySQL user_id as string/number reference
       required: true,
     },
+    undeletable : {
+      type : Boolean,
+      required : true 
+    }
   },
   { timestamps: true } // adds createdAt, updatedAt
 );
@@ -31,4 +35,4 @@ folderSchema.index({ parent_id: 1, user_id: 1 });
 
 const Folder = mongoose.model("Folder", folderSchema);
 
-export default Folder;
+module.exports = Folder;
