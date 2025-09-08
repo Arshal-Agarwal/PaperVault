@@ -1,22 +1,35 @@
-const express = require('express')
-const cors = require('cors')
-const connectDB = require('./config/connectDB')
-const app = express()
-require('dotenv').config()
-const port = process.env.PORT || 3002
-const crudRoutes = require('./routes/crud.route')
+const express = require("express");
+const cors = require("cors");
+const connectDB = require("./config/connectDB");
+const { connectRabbitMQ } = require("./config/connectRabbitMQ");
+const startFolderConsumer = require("./consumers/folderConsumer");
 
+require("dotenv").config();
+
+const app = express();
+const port = process.env.PORT || 3002;
+
+// Connect to MongoDB
 connectDB();
-app.use(express.json()); // parse JSON bodies
-app.use(express.urlencoded({ extended: true })); // parse form-data urlencoded fields
-app.use(cors())
 
-app.use('/crud',crudRoutes)
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cors());
 
-app.get('/', (req, res) => {
-  res.send('Paper Service is running!')
-})
+// Routes
+const crudRoutes = require("./routes/crud.route");
+app.use("/crud", crudRoutes);
 
-app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)
-})
+app.get("/", (req, res) => {
+  res.send("📄 Paper Service is running!");
+});
+
+// Start server
+app.listen(port, async () => {
+  console.log(`🚀 Paper Service listening on port ${port}`);
+
+  // ✅ Connect RabbitMQ + Start Consumers
+  await connectRabbitMQ();
+  startFolderConsumer();
+});

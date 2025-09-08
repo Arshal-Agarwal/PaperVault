@@ -1,9 +1,50 @@
-docker run -d --hostname rabbitmq   --name folder_to_paper   -p 5672:5672   -p 15672:15672   rabbitmq:3-management
 
-docker run --name redis -p 6379:6379 -d redis
 
-# Folder Service MongoDB
-docker run -d --name folders -p 27018:27017 -v ~/mongo_data/folders:/data/db mongo:6
+ONE-TIME ONLY :-
 
-# Paper Service MongoDB
-docker run -d --name papers -p 27019:27017 -v ~/mongo_data/papers:/data/db mongo:6
+                docker volume create folders_data
+                docker volume create papers_data
+
+                docker run -d \
+                --hostname rabbitmq \
+                --name folder_to_paper \
+                -p 5672:5672 \
+                -p 15672:15672 \
+                rabbitmq:3-management
+
+                docker run -d \
+                --name redis \
+                -p 6379:6379 \
+                redis
+
+                docker run -d \
+                --name folders \
+                -p 27018:27017 \
+                -v folders_data:/data/db \
+                mongo:6
+
+                docker run -d \
+                --name papers \
+                -p 27019:27017 \
+                -v papers_data:/data/db \
+                mongo:6
+
+
+STARTUP 
+
+                docker start folder_to_paper redis folders papers
+
+
+
+OLD
+
+
+                docker run -d --hostname rabbitmq   --name folder_to_paper   -p 5672:5672   -p 15672:15672   rabbitmq:3-management
+
+                docker run --name redis -p 6379:6379 -d redis
+
+                # Folder Service MongoDB
+                docker run -d --name folders -p 27018:27017 -v ~/mongo_data/folders:/data/db mongo:6
+
+                # Paper Service MongoDB
+                docker run -d --name papers -p 27019:27017 -v ~/mongo_data/papers:/data/db mongo:6
